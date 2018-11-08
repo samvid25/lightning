@@ -19,7 +19,7 @@ git clone --recursive https://github.com/ianlancetaylor/libbacktrace.git externa
 (cd external/libbacktrace; git checkout 5a99ff7fed66b8ea8f09c9805c138524a7035ece)
 
 git clone --recursive https://github.com/ElementsProject/libwally-core.git external/libwally-core
-(cd external/libwally-core; git checkout d8e389e840df4ed0dbd68201852c8bccd38564d8)
+(cd external/libwally-core; git checkout fb8162abafdac6ee65bf83a0ef4fe5e725abee5a)
 
 rm -rf external/jsmn/.git external/libbase58/.git/ external/libsodium/.git/ external/libbacktrace/.git/ external/libwally-core/.git
 
