@@ -234,11 +234,56 @@ static void plugin_request_queue(struct plugin *plugin,
 	io_wake(plugin);
 }
 
+static void plugin_log_handle(struct plugin *plugin, const jsmntok_t *paramstok)
+{
+	const jsmntok_t *msgtok, *leveltok;
+	enum log_level level;
+	msgtok = json_get_member(plugin->buffer, paramstok, "message");
+	leveltok = json_get_member(plugin->buffer, paramstok, "level");
+
+	if (!msgtok) {
+		plugin_kill(plugin, "Log notification from plugin doesn't have "
+				    "a \"message\" field");
+		return;
+	}
+
+	if (!leveltok || json_tok_streq(plugin->buffer, leveltok, "info"))
+		level = LOG_INFORM;
+	else if (json_tok_streq(plugin->buffer, leveltok, "debug"))
+		level = LOG_DBG;
+	else if (json_tok_streq(plugin->buffer, leveltok, "warn"))
+		level = LOG_UNUSUAL;
+	else if (json_tok_streq(plugin->buffer, leveltok, "error"))
+		level = LOG_BROKEN;
+	else {
+		plugin_kill(plugin,
+			    "Unknown log-level %.*s, valid values are "
+			    "\"debug\", \"info\", \"warn\", or \"error\".",
+			    json_tok_len(leveltok),
+			    json_tok_contents(plugin->buffer, leveltok));
+		return;
+	}
+
+	/* We strip the \" otherwise they'd be printed here. */
+	log_(plugin->log, level, "log: %.*s", json_tok_len(msgtok) - 2,
+	     json_tok_contents(plugin->buffer, msgtok) + 1);
+}
+
 static void plugin_notification_handle(struct plugin *plugin,
 				       const jsmntok_t *methtok,
 				       const jsmntok_t *paramstok)
 {
-	/* FIXME(cdecker) Implement dispatching of notifications. */
+	/* Dispatch incoming notifications. This is currently limited
+	 * to just a few method types, should this ever become
+	 * unwieldy we can switch to the AUTODATA construction to
+	 * register notification handlers in a variety of places. */
+	if (json_tok_streq(plugin->buffer, methtok, "log")) {
+		plugin_log_handle(plugin, paramstok);
+	} else {
+		plugin_kill(plugin, "Unknown notification method %.*s",
+			    json_tok_len(methtok),
+			    json_tok_contents(plugin->buffer, methtok));
+	}
 }
 
 static void plugin_response_handle(struct plugin *plugin,
