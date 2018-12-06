@@ -234,6 +234,13 @@ static void plugin_request_queue(struct plugin *plugin,
 	io_wake(plugin);
 }
 
+static void plugin_notification_handle(struct plugin *plugin,
+				       const jsmntok_t *methtok,
+				       const jsmntok_t *paramstok)
+{
+	/* FIXME(cdecker) Implement dispatching of notifications. */
+}
+
 static void plugin_response_handle(struct plugin *plugin,
 				   const jsmntok_t *toks,
 				   const jsmntok_t *idtok)
@@ -273,7 +280,8 @@ static void plugin_response_handle(struct plugin *plugin,
 static bool plugin_read_json_one(struct plugin *plugin)
 {
 	bool valid;
-	const jsmntok_t *toks, *jrtok, *idtok, *resulttok, *errortok;
+	const jsmntok_t *toks, *jrtok, *idtok, *resulttok, *errortok, *methtok,
+	    *paramstok;
 
 	/* FIXME: This could be done more efficiently by storing the
 	 * toks and doing an incremental parse, like lightning-cli
@@ -297,6 +305,8 @@ static bool plugin_read_json_one(struct plugin *plugin)
 	}
 
 	jrtok = json_get_member(plugin->buffer, toks, "jsonrpc");
+	methtok = json_get_member(plugin->buffer, toks, "method");
+	paramstok = json_get_member(plugin->buffer, toks, "params");
 	resulttok = json_get_member(plugin->buffer, toks, "result");
 	errortok = json_get_member(plugin->buffer, toks, "error");
 	idtok = json_get_member(plugin->buffer, toks, "id");
@@ -308,7 +318,21 @@ static bool plugin_read_json_one(struct plugin *plugin)
 		return false;
 	}
 
-	if (idtok && (errortok || resulttok)) {
+	if (!idtok && methtok && paramstok) {
+		/* A Notification is a Request object without an "id"
+		 * member. A Request object that is a Notification
+		 * signifies the Client's lack of interest in the
+		 * corresponding Response object, and as such no
+		 * Response object needs to be returned to the
+		 * client. The Server MUST NOT reply to a
+		 * Notification, including those that are within a
+		 * batch request.
+		 *
+		 * https://www.jsonrpc.org/specification#notification
+		 */
+		plugin_notification_handle(plugin, methtok, paramstok);
+
+	} else if (idtok && (errortok || resulttok)) {
 		/* When a rpc call is made, the Server MUST reply with
 		 * a Response, except for in the case of
 		 * Notifications. The Response is expressed as a
