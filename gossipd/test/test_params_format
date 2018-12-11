@@ -1,0 +1,6 @@
+<number_of_nodes> <number_of_channels> <msatoshi> <fuzz> <fee> <unscaled_risk_factor>	# routing parameters
+<node1> <node2> <base_fee> <proportional_fee> <delay = 1?>				# channel
+			.								# channel
+			.								# channel
+			.								# channel
+<source> <destination>									# source and destination between which path is to be found
