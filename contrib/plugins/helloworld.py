@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from lightning import Plugin, monkey_patch
+from lightning import Plugin
 
 
 plugin = Plugin(autopatch=True)
@@ -18,9 +18,11 @@ def hello(name, plugin):
     plugin.log(s)
     return s
 
+
 @plugin.method("init")
 def init(options, configuration, plugin):
     plugin.log("Plugin helloworld.py initialized")
+
 
 plugin.add_option('greeting', 'Hello', 'The greeting I should use.')
 plugin.run()
