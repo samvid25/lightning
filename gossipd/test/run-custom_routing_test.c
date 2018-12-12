@@ -255,7 +255,7 @@ int main(int argc, char **argv)
 	int path_count = tal_count(route);
 	printf("Routes:\n");
 	for(i = 0; i < path_count; i++) {
-		printf("%s -> %s", type_to_string(tmpctx, struct pubkey, &route[i]->nodes[0]->id),
+		printf("%s -> %s\n", type_to_string(tmpctx, struct pubkey, &route[i]->nodes[0]->id),
 			   			type_to_string(tmpctx, struct pubkey, &route[i]->nodes[1]->id));
 	}
 
