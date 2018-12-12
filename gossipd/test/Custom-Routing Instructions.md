@@ -14,7 +14,7 @@ make
 
 The routing algorithm can be tested with any arbitrary topology and channel parameters.
 ```bash
-cd gossip/test/
+cd gossipd/test/
 ```
 The `test_params` file contains the parameters to test the algorithm. Refer to `test_params_format` for the input format. Edit `test_params` as necessary, and then run: 
 ```
