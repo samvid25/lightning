@@ -1,6 +1,7 @@
 #include "../routing.c"
 #include "../gossip_store.c"
 #include <stdio.h>
+#include <string.h>
 
 struct broadcast_state *new_broadcast_state(tal_t *ctx UNNEEDED)
 {
@@ -223,6 +224,7 @@ int main(int argc, char **argv)
 	scanf("%lf", &unscaled_riskfactor);
 	riskfactor = unscaled_riskfactor / BLOCKS_PER_YEAR / 10000;
 	struct pubkey *nodes;
+	//char index_map[100][100];
 	nodes = malloc(number_of_nodes * sizeof(struct pubkey));
 	rstate = new_routing_state(tmpctx, NULL, &nodes[0], 0);
 	int i;
@@ -246,10 +248,10 @@ int main(int argc, char **argv)
 	scanf("%d", &n1);
 	scanf("%d", &n2);
 	
-	//printf("%10s %68s", "Node Index", "Public Key");
-	//for(i = 0; i < number_of_nodes; i++) {
-	//	printf("%10d %67s\n", i, type_to_string(tmpctx, struct node, &nodes[i]->id));		
-	//}
+	printf("%10s %68s\n", "Node Index", "Public Key");
+	for(i = 0; i < number_of_nodes; i++) {
+		printf("%10d - %67s\n", i, secp256k1_pubkey_to_hexstr(tmpctx, &nodes[i].pubkey));
+	}
 
 	route = find_route(tmpctx, rstate, &nodes[n1], &nodes[n2], msatoshi, riskfactor, fuzz, NULL, &fee);
 	int path_count = tal_count(route);
