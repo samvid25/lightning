@@ -112,6 +112,8 @@ void memleak_remove_intmap_(struct htable *memtable UNNEEDED, const struct intma
 { fprintf(stderr, "memleak_remove_intmap_ called!\n"); abort(); }
 #endif
 
+int get_index(char node_map[100][100], char *key, int n);
+
 /* Updates existing route if required. */
 static void add_connection(struct routing_state *rstate,
 					      const struct pubkey *from,
@@ -195,6 +197,16 @@ static bool channel_is_between(const struct chan *chan,
 	return false;
 }*/
 
+int get_index(char node_map[100][100], char *key, int n)
+{
+	int i;
+	for(i = 0; i < n; i++)
+	{
+		if(strcmp(node_map[i], key) == 0) return i;
+	}
+	return -1;
+}
+
 int main(int argc, char **argv)
 {
 	setup_locale();
@@ -226,6 +238,7 @@ int main(int argc, char **argv)
 	struct pubkey *nodes;
 	//char index_map[100][100];
 	nodes = malloc(number_of_nodes * sizeof(struct pubkey));
+	char node_map[100][100];
 	rstate = new_routing_state(tmpctx, NULL, &nodes[0], 0);
 	int i;
 	for(i = 0; i < number_of_nodes; i++) {
@@ -245,20 +258,32 @@ int main(int argc, char **argv)
 		if(flag)
 			get_connection(rstate, &nodes[n1], &nodes[n2])->channel_flags |= ROUTING_FLAGS_DISABLED;
 	}
-	scanf("%d", &n1);
-	scanf("%d", &n2);
+	scanf("%d", &n1); // source
+	scanf("%d", &n2); // destination
 	
-	printf("%10s %68s\n", "Node Index", "Public Key");
 	for(i = 0; i < number_of_nodes; i++) {
-		printf("%10d - %67s\n", i, secp256k1_pubkey_to_hexstr(tmpctx, &nodes[i].pubkey));
+		strcpy(node_map[i], secp256k1_pubkey_to_hexstr(tmpctx, &nodes[i].pubkey));
 	}
 
 	route = find_route(tmpctx, rstate, &nodes[n1], &nodes[n2], msatoshi, riskfactor, fuzz, NULL, &fee);
 	int path_count = tal_count(route);
-	printf("Routes:\n");
+
+	printf("Route taken:\n");
+	int temp = n1;
+
 	for(i = 0; i < path_count; i++) {
-		printf("%s -> %s\n", type_to_string(tmpctx, struct pubkey, &route[i]->nodes[0]->id),
-			   			type_to_string(tmpctx, struct pubkey, &route[i]->nodes[1]->id));
+		if(temp == get_index(node_map, type_to_string(tmpctx, struct pubkey, &route[i]->nodes[0]->id), number_of_nodes))
+		{
+			printf("%d -> %d\n", get_index(node_map, type_to_string(tmpctx, struct pubkey, &route[i]->nodes[0]->id), number_of_nodes),
+			   			get_index(node_map, type_to_string(tmpctx, struct pubkey, &route[i]->nodes[1]->id), number_of_nodes));
+			temp = get_index(node_map, type_to_string(tmpctx, struct pubkey, &route[i]->nodes[1]->id), number_of_nodes);
+		}
+		else
+		{
+			printf("%d -> %d\n", get_index(node_map, type_to_string(tmpctx, struct pubkey, &route[i]->nodes[1]->id), number_of_nodes),
+			   			get_index(node_map, type_to_string(tmpctx, struct pubkey, &route[i]->nodes[0]->id), number_of_nodes));
+			temp = get_index(node_map, type_to_string(tmpctx, struct pubkey, &route[i]->nodes[0]->id), number_of_nodes);
+		}
 	}
 
 	tal_free(tmpctx);
